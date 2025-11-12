@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>圣经网站</title>
+  <style>
+    body {
+      background: #f4f4f4;
+      font-family: "Noto Sans SC", sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 20px;
+      font-size: 24px;
+    }
+    main {
+      margin: 30px auto;
+      max-width: 600px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input {
+      width: 80%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { background-color: #2980b9; }
+    .verse { margin-top: 20px; font-size: 18px; color: #333; }
+    footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: gray;
+      padding-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>📖 在线圣经</header>
+  <main>
+    <h3>今日金句</h3>
+    <p id="daily-verse">加载中...</p>
+
+    <hr>
+
+    <h3>搜索经文</h3>
+    <input id="query" placeholder="例如：约翰福音 3:16">
+    <button onclick="searchVerse()">搜索</button>
+    <div class="verse" id="result"></div>
+  </main>
+  <footer>© 2025 圣经网站 | 愿主赐福与你</footer>
+
+  <script>
+    // 获取每日金句（英文圣经API）
+    async function getDailyVerse() {
+      const res = await fetch("https://bible-api.com/john+3:16?translation=ccb");
+      const data = await res.json();
+      document.getElementById("daily-verse").innerText = `${data.reference}：${data.text}`;
+    }
+
+    // 搜索经文
+    async function searchVerse() {
+      const query = document.getElementById("query").value.trim();
+      if (!query) return alert("请输入章节，例如 约翰福音 3:16");
+      const apiUrl = "https://bible-api.com/" + encodeURIComponent(query) + "?translation=ccb";
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      if (data.text) {
+        document.getElementById("result").innerText = `${data.reference}：${data.text}`;
+      } else {
+        document.getElementById("result").innerText = "未找到经文，请检查格式";
+      }
+    }
+
+    getDailyVerse();
+  </script>
+</body>
+</html>
