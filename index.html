@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>圣经网站 Bible Website</title>
+  <title>📖 双语圣经阅读 Bible Reading</title>
   <style>
     body {
-      background: #f7f7f7;
+      background: #f4f4f4;
       font-family: "Noto Sans SC", sans-serif;
       text-align: center;
       margin: 0;
@@ -20,7 +20,7 @@
     }
     main {
       margin: 20px auto;
-      max-width: 700px;
+      max-width: 800px;
       background: white;
       border-radius: 12px;
       padding: 20px;
@@ -40,9 +40,17 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      margin: 5px;
     }
     button:hover { background-color: #2980b9; }
-    .verse { margin-top: 20px; font-size: 18px; color: #333; line-height: 1.6; text-align: left; }
+    .verse {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+      line-height: 1.6;
+      text-align: left;
+      white-space: pre-wrap;
+    }
     footer {
       margin-top: 40px;
       font-size: 14px;
@@ -50,10 +58,11 @@
       padding-bottom: 20px;
     }
     hr { margin: 25px 0; }
+    .nav-buttons { margin-top: 15px; }
   </style>
 </head>
 <body>
-  <header>📖 在线圣经阅读 Bible Reading</header>
+  <header>📖 双语圣经阅读 Bible Reading</header>
   <main>
     <h3>✨ 今日金句</h3>
     <p id="daily-verse">加载中...</p>
@@ -67,75 +76,128 @@
 
     <hr>
 
-    <h3>📘 阅读整章圣经</h3>
+    <h3>📘 阅读整章圣经（中英双语）</h3>
     <select id="book"></select>
     <input id="chapter" type="number" placeholder="章节号 (例如 1)">
     <button onclick="readChapter()">阅读</button>
+
+    <div class="nav-buttons">
+      <button onclick="prevChapter()">⬅️ 上一章</button>
+      <button onclick="nextChapter()">➡️ 下一章</button>
+    </div>
+
     <div class="verse" id="chapter-result"></div>
   </main>
 
   <footer>© 2025 圣经网站 | 愿主赐福与你</footer>
 
   <script>
-    // 圣经书卷列表（简体中文）
-    const books = [
-      "创世记","出埃及记","利未记","民数记","申命记","约书亚记","士师记","路得记","撒母耳记上","撒母耳记下",
-      "列王纪上","列王纪下","历代志上","历代志下","以斯拉记","尼希米记","以斯帖记","约伯记","诗篇","箴言",
-      "传道书","雅歌","以赛亚书","耶利米书","耶利米哀歌","以西结书","但以理书","何西阿书","约珥书","阿摩司书",
-      "俄巴底亚书","约拿书","弥迦书","那鸿书","哈巴谷书","西番雅书","哈该书","撒迦利亚书","玛拉基书",
-      "马太福音","马可福音","路加福音","约翰福音","使徒行传","罗马书","哥林多前书","哥林多后书","加拉太书",
-      "以弗所书","腓立比书","歌罗西书","帖撒罗尼迦前书","帖撒罗尼迦后书","提摩太前书","提摩太后书","提多书",
-      "腓利门书","希伯来书","雅各书","彼得前书","彼得后书","约翰一书","约翰二书","约翰三书","犹大书","启示录"
-    ];
+    // 中文-英文书卷对照表
+    const bookMap = {
+      "创世记":"Genesis","出埃及记":"Exodus","利未记":"Leviticus","民数记":"Numbers","申命记":"Deuteronomy",
+      "约书亚记":"Joshua","士师记":"Judges","路得记":"Ruth","撒母耳记上":"1 Samuel","撒母耳记下":"2 Samuel",
+      "列王纪上":"1 Kings","列王纪下":"2 Kings","历代志上":"1 Chronicles","历代志下":"2 Chronicles",
+      "以斯拉记":"Ezra","尼希米记":"Nehemiah","以斯帖记":"Esther","约伯记":"Job","诗篇":"Psalms",
+      "箴言":"Proverbs","传道书":"Ecclesiastes","雅歌":"Song of Solomon","以赛亚书":"Isaiah",
+      "耶利米书":"Jeremiah","耶利米哀歌":"Lamentations","以西结书":"Ezekiel","但以理书":"Daniel",
+      "何西阿书":"Hosea","约珥书":"Joel","阿摩司书":"Amos","俄巴底亚书":"Obadiah","约拿书":"Jonah",
+      "弥迦书":"Micah","那鸿书":"Nahum","哈巴谷书":"Habakkuk","西番雅书":"Zephaniah","哈该书":"Haggai",
+      "撒迦利亚书":"Zechariah","玛拉基书":"Malachi",
+      "马太福音":"Matthew","马可福音":"Mark","路加福音":"Luke","约翰福音":"John","使徒行传":"Acts",
+      "罗马书":"Romans","哥林多前书":"1 Corinthians","哥林多后书":"2 Corinthians","加拉太书":"Galatians",
+      "以弗所书":"Ephesians","腓立比书":"Philippians","歌罗西书":"Colossians","帖撒罗尼迦前书":"1 Thessalonians",
+      "帖撒罗尼迦后书":"2 Thessalonians","提摩太前书":"1 Timothy","提摩太后书":"2 Timothy","提多书":"Titus",
+      "腓利门书":"Philemon","希伯来书":"Hebrews","雅各书":"James","彼得前书":"1 Peter","彼得后书":"2 Peter",
+      "约翰一书":"1 John","约翰二书":"2 John","约翰三书":"3 John","犹大书":"Jude","启示录":"Revelation"
+    };
 
-    // 初始化下拉框
     const bookSelect = document.getElementById("book");
-    books.forEach(b => {
+    Object.keys(bookMap).forEach(b => {
       const opt = document.createElement("option");
       opt.value = b;
       opt.textContent = b;
       bookSelect.appendChild(opt);
     });
 
-    // 显示每日金句
+    let currentBook = "";
+    let currentChapter = 1;
+
+    // 获取每日金句（英中双语）
     async function getDailyVerse() {
       try {
-        const res = await fetch("https://bible-api.com/john+3:16?translation=ccb");
-        const data = await res.json();
-        document.getElementById("daily-verse").innerText = `${data.reference}：${data.text}`;
+        const resEN = await fetch("https://bible-api.com/john+3:16");
+        const dataEN = await resEN.json();
+        const resCN = await fetch("https://bible-api.com/john+3:16?translation=ccb");
+        const dataCN = await resCN.json();
+        document.getElementById("daily-verse").innerText = `${dataCN.reference}：\n${dataCN.text}\n\n${dataEN.text}`;
       } catch {
         document.getElementById("daily-verse").innerText = "无法加载每日金句，请稍后再试。";
       }
     }
 
-    // 搜索单节经文
+    // 搜索经文（双语）
     async function searchVerse() {
-      const query = document.getElementById("query").value.trim();
+      let query = document.getElementById("query").value.trim();
       if (!query) return alert("请输入章节，例如 约翰福音 3:16");
-      const apiUrl = "https://bible-api.com/" + encodeURIComponent(query) + "?translation=ccb";
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      if (data.text) {
-        document.getElementById("search-result").innerText = `${data.reference}：${data.text}`;
+      for (const [cn, en] of Object.entries(bookMap)) {
+        if (query.includes(cn)) {
+          query = query.replace(cn, en);
+          break;
+        }
+      }
+      const resEN = await fetch(`https://bible-api.com/${encodeURIComponent(query)}`);
+      const resCN = await fetch(`https://bible-api.com/${encodeURIComponent(query)}?translation=ccb`);
+      const dataEN = await resEN.json();
+      const dataCN = await resCN.json();
+      if (dataEN.text && dataCN.text) {
+        document.getElementById("search-result").innerText =
+          `${dataCN.reference}\n\n中文：${dataCN.text}\n\nEnglish: ${dataEN.text}`;
       } else {
-        document.getElementById("search-result").innerText = "未找到经文，请检查格式";
+        document.getElementById("search-result").innerText = "未找到经文，请检查输入。";
       }
     }
 
-    // 阅读整章经文
-    async function readChapter() {
-      const book = document.getElementById("book").value;
-      const chapter = document.getElementById("chapter").value.trim();
-      if (!chapter) return alert("请输入章节号，例如 1");
-      const apiUrl = `https://bible-api.com/${encodeURIComponent(book)}+${chapter}?translation=ccb`;
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      if (data.verses) {
-        const versesText = data.verses.map(v => `${v.verse}. ${v.text}`).join("\n");
-        document.getElementById("chapter-result").innerText = `${data.reference}\n\n${versesText}`;
+    // 阅读整章（中英双语）
+    async function readChapter(book = null, chapter = null) {
+      currentBook = book || document.getElementById("book").value;
+      currentChapter = parseInt(chapter || document.getElementById("chapter").value.trim()) || 1;
+      const bookEN = bookMap[currentBook];
+      const apiEN = `https://bible-api.com/${encodeURIComponent(bookEN)}+${currentChapter}`;
+      const apiCN = `https://bible-api.com/${encodeURIComponent(bookEN)}+${currentChapter}?translation=ccb`;
+
+      document.getElementById("chapter-result").innerText = "加载中...";
+
+      const [resEN, resCN] = await Promise.all([fetch(apiEN), fetch(apiCN)]);
+      const dataEN = await resEN.json();
+      const dataCN = await resCN.json();
+
+      if (dataEN.verses && dataCN.verses) {
+        let combined = `${dataCN.reference}\n\n`;
+        for (let i = 0; i < dataEN.verses.length; i++) {
+          const vCN = dataCN.verses[i];
+          const vEN = dataEN.verses[i];
+          if (vCN && vEN) {
+            combined += `${vCN.verse}. ${vCN.text}\n${vEN.text}\n\n`;
+          }
+        }
+        document.getElementById("chapter-result").innerText = combined;
       } else {
-        document.getElementById("chapter-result").innerText = "未找到经文，请检查输入";
+        document.getElementById("chapter-result").innerText = "未找到该章节，请检查输入。";
       }
+    }
+
+    function prevChapter() {
+      if (currentChapter > 1) {
+        currentChapter--;
+        readChapter(currentBook, currentChapter);
+        document.getElementById("chapter").value = currentChapter;
+      }
+    }
+
+    function nextChapter() {
+      currentChapter++;
+      readChapter(currentBook, currentChapter);
+      document.getElementById("chapter").value = currentChapter;
     }
 
     getDailyVerse();
